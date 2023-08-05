@@ -1,2 +1,4 @@
 # EventMgr
 比较方便的反注册一组事件的EventMgr
+
+完全复用C#的delegate和event流程，不走EventType（enum、string、int）为key的模式。因为绝大部分情况下不需要解监听者对发布者的耦合，反而EventType版的EventMgr容易拉低开发下限
