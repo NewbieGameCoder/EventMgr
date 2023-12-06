@@ -1,15 +1,24 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 
-namespace TFWCore.Event
+namespace Event
 {
     /// <summary>
     /// 本模块主要目的是兜底一部分delegate或者事件的“自动释放”，防止出现过多的事件忘记释放导致的回调报错
     /// </summary>
     public static class EventMgr
     {
+        static EventMgr()
+        {
+            Init();
+        }
+
         public static void Init()
         {
+            if (bInit) return;
+
+            bInit = true;
             mEventHosts = new Dictionary<object, HashSet<Proxy>>();
         }
 
@@ -17,6 +26,7 @@ namespace TFWCore.Event
         {
             // 故意置空好暴露出不正当时机注册的回调
             mEventHosts = null;
+            bInit = false;
         }
 
         public static void AttachListener(ref Action broadcastor, Action listener, object host)
@@ -56,6 +66,8 @@ namespace TFWCore.Event
         /// </summary>
         public static void DetachListener(object host)
         {
+            if (!bInit) return;
+
             if (mEventHosts.TryGetValue(host, out var listenerList))
             {
                 listenerList.Clear();
@@ -117,7 +129,7 @@ namespace TFWCore.Event
 
         private static bool DidProxyInvalid(object host, Proxy proxy)
         {
-            return !mEventHosts.TryGetValue(host, out var proxies) || !proxies.Contains(proxy);
+            return mEventHosts == null || !mEventHosts.TryGetValue(host, out var proxies) || !proxies.Contains(proxy);
         }
 
         private struct Proxy
@@ -191,6 +203,7 @@ namespace TFWCore.Event
             }
         }
 
+        static bool bInit;
         static Dictionary<object, HashSet<Proxy>> mEventHosts;
     }
 }
